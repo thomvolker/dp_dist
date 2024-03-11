@@ -115,9 +115,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 10</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Bounded DP</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">ifelse</span>(x <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">10</span>, x)) <span class="sc">-</span> <span class="fu">sum</span>(x) <span class="co"># sensitivity = 9</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">ifelse</span>(x <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">10</span>, x)) <span class="sc">-</span> <span class="fu">sum</span>(<span class="fu">ifelse</span>(x <span class="sc">==</span> <span class="dv">10</span>, <span class="dv">1</span>, x)) <span class="co"># sensitivity = 18</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 9</code></pre>
+<pre><code>[1] 18</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="dv">10</span>, <span class="dv">1</span>, <span class="fl">0.5</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Unbounded DP</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">c</span>(y, <span class="dv">1</span>)) <span class="sc">-</span> <span class="fu">sum</span>(y) <span class="co"># sensitivity = 1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Bounded DP</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>(<span class="fu">sum</span>(y) <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">-</span> (<span class="fu">sum</span>(y) <span class="sc">-</span> <span class="dv">1</span>) <span class="co"># sensitivity = 2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
 </div>
 </div>
 </section>
@@ -126,25 +138,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>Differentially private distributions</h1>
 <p>Before implementing any distribution, let’s first define the Laplace distribution in <code>R</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>rlaplace <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity) {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> sensitivity <span class="sc">/</span> epsilon</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span> b <span class="sc">*</span> <span class="fu">sign</span>(p) <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(p))</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">rlaplace</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dv">1</span>), <span class="at">breaks =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>rlaplace <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity) {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> sensitivity <span class="sc">/</span> epsilon</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span> b <span class="sc">*</span> <span class="fu">sign</span>(p) <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(p))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">rlaplace</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dv">1</span>), <span class="at">breaks =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="dp_dist_R_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Looks Laplace-ish</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Looks Laplace-ish</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Looks Laplace-ish</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">rlaplace</span>(<span class="dv">100000</span>, <span class="fl">0.01</span>, <span class="dv">1</span>), <span class="at">breaks =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">rlaplace</span>(<span class="dv">100000</span>, <span class="fl">0.01</span>, <span class="dv">1</span>), <span class="at">breaks =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="dp_dist_R_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Also Laplace-ish, but with higher privacy level</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Also Laplace-ish, but with higher privacy level</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Also Laplace-ish, but with higher privacy level</code></pre>
 </div>
@@ -152,27 +164,95 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="differentially-private-categorical-distributions" class="level1">
 <h1>Differentially private categorical distributions</h1>
-<section id="unique-key-distribution" class="level2">
-<h2 class="anchored" data-anchor-id="unique-key-distribution">Unique key distribution</h2>
-<p>The ID distribution does not disclose any information apart from the number of observations (which is typically not considered a sensitive attribute). Hence, it satisfies DP by definition.</p>
-</section>
-<section id="poisson-distribution" class="level2">
-<h2 class="anchored" data-anchor-id="poisson-distribution">Poisson distribution</h2>
+<section id="multinoulli-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="multinoulli-distribution">Multinoulli Distribution</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dp_Poisson <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity, lambda) {</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  sensitivity <span class="ot">&lt;-</span> sensitivity <span class="sc">/</span> n <span class="co"># but depends on definition bounded/unbounded</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  lambda <span class="ot">&lt;-</span> lambda <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rpois</span>(n, lambda)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>dp_MultinoulliDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, <span class="at">sensitivity =</span> <span class="dv">1</span>, prob) {</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  obs  <span class="ot">&lt;-</span> prob <span class="sc">*</span> n</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  obs  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">1</span>, obs <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="fu">length</span>(obs), epsilon, sensitivity))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  prob <span class="ot">&lt;-</span> obs <span class="sc">/</span> <span class="fu">sum</span>(obs)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample.int</span>(<span class="fu">length</span>(prob), n, <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> prob)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="differentially-private-discrete-distributions" class="level1">
+<h1>Differentially private discrete distributions</h1>
+<section id="sec-DiscreteUniform" class="level2">
+<h2 class="anchored" data-anchor-id="sec-DiscreteUniform">Discrete Uniform Distribution</h2>
+<p>Isn’t the discrete uniform distribution differentially private to begin with? That is, if the bounds are not dependent on the data, then there are no parameters that depend on the data (except the likelihood perhaps). Otherwise, you can of course add noise to the bounds. By the post-processing theorem, you can then rescale the data to lie within the original bounds, which is possible only if the bounds are independent of the data. If the bounds are not independent of the data, we can perhaps use the technique by Dwork &amp; Lei (2010) to estimate the bounds in a DP-preserving manner.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dp_DiscreteUniformDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, <span class="at">sensitivity =</span> <span class="cn">NULL</span>, lower, upper) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(sensitivity)) {</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    sensitivity <span class="ot">&lt;-</span> upper <span class="sc">-</span> lower</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (sensitivity <span class="sc">&lt;</span> upper <span class="sc">-</span> lower) {</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Sensitivity must be at least as large as the range of the distribution"</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">runif</span>(n, lower, upper) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="discrete-normal-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="discrete-normal-distribution">Discrete Normal Distribution</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>dp_DiscreteNormalDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity, mean, sd, <span class="at">minsd =</span> <span class="fl">1e-8</span>) {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  epsilon <span class="ot">&lt;-</span> epsilon <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  mean <span class="ot">&lt;-</span> mean <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity<span class="sc">/</span>n)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  sd   <span class="ot">&lt;-</span> <span class="fu">max</span>(minsd, sd <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span>n))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(n, mean, sd) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="discrete-truncated-normal-distribution" class="level2">
 <h2 class="anchored" data-anchor-id="discrete-truncated-normal-distribution">Discrete Truncated Normal Distribution</h2>
 <p>Here, we can raise the concern of whether the lower and upper bound are considered sensitive. That is, do we need to add noise to the bounds, or do we feel that this is covered by the sensitivity?</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dp_DiscreteTruncatedNormalDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity, lower, upper, mean, sd) {</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dp_DiscreteTruncatedNormalDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, <span class="at">sensitivity =</span> <span class="cn">NULL</span>, lower, upper, mean, sd) {</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(sensitivity)) {</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    sensitivity <span class="ot">&lt;-</span> upper <span class="sc">-</span> lower</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (sensitivity <span class="sc">&lt;</span> upper <span class="sc">-</span> lower) {</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Sensitivity must be at least as large as the range of the distribution"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># How is this implemented in metasyn?</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  sensitivity <span class="ot">&lt;-</span> sensitivity <span class="sc">/</span> n</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  epsilon <span class="ot">&lt;-</span> epsilon <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  mean <span class="ot">&lt;-</span> mean <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  sd   <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fl">0.00000001</span>, sd <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity))</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="poisson-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-distribution">Poisson distribution</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>dp_Poisson <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, sensitivity, lambda) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  sensitivity <span class="ot">&lt;-</span> sensitivity <span class="sc">/</span> n <span class="co"># but depends on definition bounded/unbounded</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  lambda <span class="ot">&lt;-</span> lambda <span class="sc">+</span> <span class="fu">rlaplace</span>(<span class="dv">1</span>, epsilon, sensitivity)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rpois</span>(n, lambda)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="unique-key-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="unique-key-distribution">Unique key distribution</h2>
+<p>The ID distribution does not disclose any information apart from the number of observations (which is typically not considered a sensitive attribute). Hence, it satisfies DP by definition.</p>
+</section>
+</section>
+<section id="differentially-private-continuous-distributions" class="level1">
+<h1>Differentially private continuous distributions</h1>
+<section id="uniform-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="uniform-distribution">Uniform distribution</h2>
+<p>Again, the uniform distribution might be differentially private by definition. See <a href="#sec-DiscreteUniform">Section&nbsp;4.1</a>. If the <em>true</em> distribution was then symmetric in the same range as the data, the mean of this distribution will even be unbiased.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>dp_DiscreteUniformDistribution <span class="ot">&lt;-</span> <span class="cf">function</span>(n, epsilon, <span class="at">sensitivity =</span> <span class="cn">NULL</span>, lower, upper) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(sensitivity)) {</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    sensitivity <span class="ot">&lt;-</span> upper <span class="sc">-</span> lower</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (sensitivity <span class="sc">&lt;</span> upper <span class="sc">-</span> lower) {</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Sensitivity must be at least as large as the range of the distribution"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">runif</span>(n, lower, upper)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>

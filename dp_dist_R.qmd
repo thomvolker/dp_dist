@@ -24,7 +24,15 @@ x <- c(1, x, 10)
 sum(c(x, 10)) - sum(x) # sensitivity = 10
 
 # Bounded DP
-sum(ifelse(x == 1, 10, x)) - sum(x) # sensitivity = 9
+sum(ifelse(x == 1, 10, x)) - sum(ifelse(x == 10, 1, x)) # sensitivity = 18
+
+y <- rbinom(10, 1, 0.5)
+
+# Unbounded DP
+sum(c(y, 1)) - sum(y) # sensitivity = 1
+
+# Bounded DP
+(sum(y) + 1) - (sum(y) - 1) # sensitivity = 2
 ```
 
 # Differentially private distributions
@@ -47,9 +55,70 @@ cat("Also Laplace-ish, but with higher privacy level\n")
 
 # Differentially private categorical distributions
 
-## Unique key distribution
+## Multinoulli Distribution
 
-The ID distribution does not disclose any information apart from the number of observations (which is typically not considered a sensitive attribute). Hence, it satisfies DP by definition.
+```{r}
+dp_MultinoulliDistribution <- function(n, epsilon, sensitivity = 1, prob) {
+  
+  obs  <- prob * n
+  obs  <- pmax(1, obs + rlaplace(length(obs), epsilon, sensitivity))
+  prob <- obs / sum(obs)
+  
+  sample.int(length(prob), n, replace = TRUE, prob = prob)
+}
+```
+
+
+# Differentially private discrete distributions
+
+## Discrete Uniform Distribution {#sec-DiscreteUniform}
+
+Isn't the discrete uniform distribution differentially private to begin with? That is, if the bounds are not dependent on the data, then there are no parameters that depend on the data (except the likelihood perhaps). Otherwise, you can of course add noise to the bounds. By the post-processing theorem, you can then rescale the data to lie within the original bounds, which is possible only if the bounds are independent of the data. If the bounds are not independent of the data, we can perhaps use the technique by Dwork \& Lei (2010) to estimate the bounds in a DP-preserving manner.
+
+```{r}
+dp_DiscreteUniformDistribution <- function(n, epsilon, sensitivity = NULL, lower, upper) {
+    if (is.null(sensitivity)) {
+    sensitivity <- upper - lower
+  } else if (sensitivity < upper - lower) {
+    stop("Sensitivity must be at least as large as the range of the distribution")
+  }
+  runif(n, lower, upper) |> round()
+}
+
+```
+
+## Discrete Normal Distribution
+
+```{r}
+dp_DiscreteNormalDistribution <- function(n, epsilon, sensitivity, mean, sd, minsd = 1e-8) {
+  epsilon <- epsilon / 2
+  mean <- mean + rlaplace(1, epsilon, sensitivity/n)
+  sd   <- max(minsd, sd + rlaplace(1, epsilon, sensitivity^2/n))
+  rnorm(n, mean, sd) |> round()
+}
+
+```
+
+
+## Discrete Truncated Normal Distribution
+
+Here, we can raise the concern of whether the lower and upper bound are considered sensitive. That is, do we need to add noise to the bounds, or do we feel that this is covered by the sensitivity?
+
+```{r}
+dp_DiscreteTruncatedNormalDistribution <- function(n, epsilon, sensitivity = NULL, lower, upper, mean, sd) {
+  if (is.null(sensitivity)) {
+    sensitivity <- upper - lower
+  } else if (sensitivity < upper - lower) {
+    stop("Sensitivity must be at least as large as the range of the distribution")
+  }
+  # How is this implemented in metasyn?
+  sensitivity <- sensitivity / n
+  epsilon <- epsilon / 2
+  mean <- mean + rlaplace(1, epsilon, sensitivity)
+  sd   <- max(0.00000001, sd + rlaplace(1, epsilon, sensitivity))
+  
+}
+```
 
 ## Poisson distribution
 
@@ -61,13 +130,24 @@ dp_Poisson <- function(n, epsilon, sensitivity, lambda) {
 }
 ```
 
-## Discrete Truncated Normal Distribution
+## Unique key distribution
 
-Here, we can raise the concern of whether the lower and upper bound are considered sensitive. That is, do we need to add noise to the bounds, or do we feel that this is covered by the sensitivity?
+The ID distribution does not disclose any information apart from the number of observations (which is typically not considered a sensitive attribute). Hence, it satisfies DP by definition.
+
+# Differentially private continuous distributions
+
+## Uniform distribution
+
+Again, the uniform distribution might be differentially private by definition. See @sec-DiscreteUniform. If the _true_ distribution was then symmetric in the same range as the data, the mean of this distribution will even be unbiased.
 
 ```{r}
-dp_DiscreteTruncatedNormalDistribution <- function(n, epsilon, sensitivity, lower, upper, mean, sd) {
-  
+dp_DiscreteUniformDistribution <- function(n, epsilon, sensitivity = NULL, lower, upper) {
+    if (is.null(sensitivity)) {
+    sensitivity <- upper - lower
+  } else if (sensitivity < upper - lower) {
+    stop("Sensitivity must be at least as large as the range of the distribution")
+  }
+  runif(n, lower, upper)
 }
 ```
 
